@@ -126,6 +126,9 @@ How long did it take to send the data?
 - 120 seconds
 - 300 seconds
 
+### Question 2 Answer
+
+ANSWER:
 
 ## Question 3. Consumer - trip distance
 
