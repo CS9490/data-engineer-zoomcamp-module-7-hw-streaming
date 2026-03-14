@@ -171,6 +171,43 @@ How many trips have `trip_distance` > 5?
 - 8506
 - 9506
 
+### Question 3 Answer
+
+ANSWER:
+- **8506** trips > 5 miles (not km - must've been a typo in the question)
+- **15491** trips > 5 km
+
+In the question, it says to count the number of trips > 5km of distance, but the count of those trips is not within the answers. I did the counts of trips that were greater than 5 km and also the counts of trips that were greater than 5 miles. I also attached the notebook I used to do this in this repository. Again no outputs will be shown in it as they were ran in a codespace on another repo.
+
+```python
+# ran KafkaConsumer with consumer_timeout_ms=5000 # stop after 5s w/ no new records to get counts after the stream was done for the parquet we use
+
+
+num_trips_gt_5km = 0
+num_trips_gt_5m = 0
+
+# according to nyc taxi data dictionary, "The elapsed trip distance in miles reported by the taximeter."
+# need to turn miles to km before checking
+
+for record in consumer:
+    if record.value.trip_distance > 5.0:
+        num_trips_gt_5m += 1
+    if record.value.trip_distance * 1.60934 > 5.0:
+        num_trips_gt_5km += 1
+    print(record.value)
+
+print(f"Number of trips greater than 5km: {num_trips_gt_5km}")
+
+print(f"Number of trips greater than 5m: {num_trips_gt_5m}")
+```
+
+```bash
+...
+Ride(lpep_pickup_datetime='2025-10-31 23:23:00', lpep_dropoff_datetime='2025-10-31 23:37:00', PULocationID=195, DOLocationID=33, passenger_count=-1, trip_distance=3.0, tip_amount=0.0, total_amount=19.6)
+
+Number of trips greater than 5km: 15491
+Number of trips greater than 5m: 8506
+```
 
 ## Part 2: PyFlink (Questions 4-6)
 
