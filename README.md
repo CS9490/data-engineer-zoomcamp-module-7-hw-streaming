@@ -129,6 +129,33 @@ How long did it take to send the data?
 ### Question 2 Answer
 
 ANSWER:
+- **10 seconds**
+
+Adding the entire code used to bring the parquet into Redpanda would prove cumbersome. I've added the notebook I used in this repository. Note that there are no outputs as I ran the code within a separate codespace as opposed to this repository. The code I used to send the data along with the output is here:
+
+```python
+from time import time
+
+t0 = time()
+
+topic_name = 'green_trips'
+
+# send all rows to Kafka
+for _, row in df.iterrows():
+    ride = ride_from_row(row)
+    producer.send(topic_name, value=ride)
+
+producer.flush()
+
+t1 = time()
+print(f'took {(t1 - t0):.2f} seconds')
+```
+
+```bash
+took 12.93 seconds
+```
+
+Since it took 12.93 seconds, the closest answer is 10 seconds.
 
 ## Question 3. Consumer - trip distance
 
