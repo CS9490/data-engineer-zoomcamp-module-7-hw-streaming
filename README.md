@@ -83,6 +83,12 @@ This means the version of Redpanda I am running is v25.3.9.
 
 Create a topic called `green-trips`:
 
+## Homework note (topic name)
+
+I accidentally used `green_trips` (underscore) instead of `green-trips` (hyphen). All code in this repo (producer, consumer, and Flink jobs) reads/writes `green_trips`, so the results shown below correspond to that topic.
+
+In order to reproduce the results I got, **please replace `green-trips` with `green_trips`.**
+
 ```bash
 docker exec -it workshop-redpanda-1 rpk topic create green-trips
 ```
@@ -131,7 +137,7 @@ How long did it take to send the data?
 ANSWER:
 - **10 seconds**
 
-Adding the entire code used to bring the parquet into Redpanda would prove cumbersome. I've added the notebook I used in this repository. Note that there are no outputs as I ran the code within a separate codespace as opposed to this repository. The code I used to send the data along with the output is here:
+Adding the entire code used to bring the parquet into Redpanda would prove cumbersome. I've added the notebook I used in this repository (`producer_hw.ipynb`). Note that there are no outputs as I ran the code within a separate codespace as opposed to this repository. The code I used to send the data along with the output is here:
 
 ```python
 from time import time
@@ -177,7 +183,7 @@ ANSWER:
 - **8506** trips > 5 miles (not km - must've been a typo in the question)
 - **15491** trips > 5 km
 
-In the question, it says to count the number of trips > 5km of distance, but the count of those trips is not within the answers. I did the counts of trips that were greater than 5 km and also the counts of trips that were greater than 5 miles. I also attached the notebook I used to do this in this repository. Again no outputs will be shown in it as they were ran in a codespace on another repo.
+In NYC TLC data, `trip_distance` is reported in miles. The question says “kilometers”, but the multiple-choice options match the miles interpretation. Using miles, the count is 8506 trips with `trip_distance > 5`. (Converting to km gives 15491 trips with distance > 5 km). I also attached the notebook I used to do this in this repository (`consumer_hw_q3.ipynb`). Again, no outputs will be shown in it as they were ran in a codespace on another repo.
 
 ```python
 # ran KafkaConsumer with consumer_timeout_ms=5000 # stop after 5s w/ no new records to get counts after the stream was done for the parquet we use
@@ -527,7 +533,7 @@ Which hour had the highest total tip amount?
 Answer:
 - **2025-10-16 18:00:00**
 
-After creating the following job and running it:
+After creating the following job (called `aggregation_job_hw_q6.py` in this repo too if you'd like to view separately) and running it:
 
 ```python
 from pyflink.datastream import StreamExecutionEnvironment
