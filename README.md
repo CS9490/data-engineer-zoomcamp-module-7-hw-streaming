@@ -186,7 +186,7 @@ ANSWER:
 In NYC TLC data, `trip_distance` is reported in miles. The question says “kilometers”, but the multiple-choice options match the miles interpretation. Using miles, the count is 8506 trips with `trip_distance > 5`. (Converting to km gives 15491 trips with distance > 5 km). I also attached the notebook I used to do this in this repository (`consumer_hw_q3.ipynb`). Again, no outputs will be shown in it as they were ran in a codespace on another repo.
 
 ```python
-# ran KafkaConsumer with consumer_timeout_ms=5000 # stop after 5s w/ no new records to get counts after the stream was done for the parquet we use
+# ran KafkaConsumer with consumer_timeout_ms=5000, stop after 5s w/ no new records to get counts after the stream was done for the parquet we use
 
 
 num_trips_gt_5km = 0
