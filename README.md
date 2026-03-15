@@ -522,45 +522,106 @@ Which hour had the highest total tip amount?
 - 2025-10-22 08:00:00
 - 2025-10-30 16:00:00
 
+### Question 6 Answer
 
-## Submitting the solutions
+Answer:
+- **2025-10-16 18:00:00**
 
-- Form for submitting: https://courses.datatalks.club/de-zoomcamp-2026/homework/hw7
+After creating the following job and running it:
+
+```python
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.table import EnvironmentSettings, StreamTableEnvironment
 
 
-## Learning in public
+def create_events_source_kafka(t_env):
+    table_name = "events"
+    source_ddl = f"""
+        CREATE TABLE {table_name} (
+            PULocationID INTEGER,
+            DOLocationID INTEGER,
+            tip_amount DOUBLE,
+            lpep_pickup_datetime VARCHAR,
+            event_timestamp AS TO_TIMESTAMP(lpep_pickup_datetime, 'yyyy-MM-dd HH:mm:ss'),
+            WATERMARK for event_timestamp as event_timestamp - INTERVAL '5' SECOND
+        ) WITH (
+            'connector' = 'kafka',
+            'properties.bootstrap.servers' = 'redpanda:29092',
+            'topic' = 'green_trips',
+            'scan.startup.mode' = 'earliest-offset',
+            'properties.auto.offset.reset' = 'earliest',
+            'format' = 'json'
+        );
+        """
+    t_env.execute_sql(source_ddl)
+    return table_name
 
-We encourage everyone to share what they learned.
-Read more about the benefits [here](https://alexeyondata.substack.com/p/benefits-of-learning-in-public-and).
 
-## Example post for LinkedIn
+def create_events_aggregated_sink(t_env):
+    table_name = 'processed_events_aggregated_q6'
+    sink_ddl = f"""
+        CREATE TABLE {table_name} (
+            window_start TIMESTAMP(3),
+            tip_amount DOUBLE,
+            PRIMARY KEY (window_start) NOT ENFORCED
+        ) WITH (
+            'connector' = 'jdbc',
+            'url' = 'jdbc:postgresql://postgres:5432/postgres',
+            'table-name' = '{table_name}',
+            'username' = 'postgres',
+            'password' = 'postgres',
+            'driver' = 'org.postgresql.Driver'
+        );
+        """
+    t_env.execute_sql(sink_ddl)
+    return table_name
 
+
+def log_aggregation():
+    env = StreamExecutionEnvironment.get_execution_environment()
+    env.enable_checkpointing(10 * 1000)
+    env.set_parallelism(1)
+
+    settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
+    t_env = StreamTableEnvironment.create(env, environment_settings=settings)
+
+    try:
+        source_table = create_events_source_kafka(t_env)
+        aggregated_table = create_events_aggregated_sink(t_env)
+
+        t_env.execute_sql(f"""
+        INSERT INTO {aggregated_table}
+        SELECT
+            window_start,
+            SUM(tip_amount) AS tip_amount
+        FROM TABLE(
+            TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '1' HOUR)
+        )
+        GROUP BY window_start;
+
+        """).wait()
+
+    except Exception as e:
+        print("Writing records from Kafka to JDBC failed:", str(e))
+
+
+if __name__ == '__main__':
+    log_aggregation()
 ```
-Week 7 of Data Engineering Zoomcamp by @DataTalksClub complete!
 
-Just finished Module 7 - Streaming with PyFlink. Learned how to:
+I then queried the Postgres table and got the following results:
 
-- Set up Redpanda as a Kafka replacement
-- Build Kafka producers and consumers in Python
-- Create tumbling and session windows in Flink
-- Analyze real-time taxi trip data with stream processing
-
-Here's my homework solution: <LINK>
-
-You can sign up here: https://github.com/DataTalksClub/data-engineering-zoomcamp/
+```sql
+select * FROM processed_events_aggregated_q6 ORDER BY tip_amount DESC LIMIT 3
++---------------------+-------------------+
+| window_start        | tip_amount        |
+|---------------------+-------------------|
+| 2025-10-16 18:00:00 | 524.9599999999998 |
+| 2025-10-30 16:00:00 | 507.1             |
+| 2025-10-10 17:00:00 | 499.6000000000002 |
++---------------------+-------------------+
+SELECT 3
+Time: 0.002s
 ```
 
-## Example post for Twitter/X
-
-```
-Module 7 of Data Engineering Zoomcamp done!
-
-- Kafka producers and consumers
-- PyFlink tumbling and session windows
-- Real-time taxi data analysis
-- Redpanda as Kafka replacement
-
-My solution: <LINK>
-
-Free course by @DataTalksClub: https://github.com/DataTalksClub/data-engineering-zoomcamp/
-```
+Therefore, the hour that had the most tips in Oct. 2025 was **2025-10-16 18:00:00**.
